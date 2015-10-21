@@ -1,5 +1,8 @@
 __author__ = 'TramAnh'
 
+import pandas as pd
+import datetime as dt
+
 def clean_header():
     ###
     # Cleaning the CDR Raw Data
@@ -31,23 +34,13 @@ def clean_duration_data():
     # 3. Write changes to cleaned_data.csv
     ###
 
-    import pandas as pd
-    import datetime as dt
-
     # Convert 'EVENT_DATE' column to Timestamp
-    dateparse = lambda x: pd.datetime.strptime(x, '%d-%b-%y %I.%M.%S.000000 %p')
+    timeformat = '%d-%b-%y %I.%M.%S.000000 %p'
     infile = 'cleaned_header.csv'
-    raw_data = pd.read_csv(infile, sep='|', parse_dates=['EVENT_DATE'], date_parser=dateparse)
-    print 'Done parsing data'
+    raw_data = convert_to_timestamp(infile, timeformat)
 
     # Clean 'DURATION' to datetime format
     print 'Starting to clean duration data'
-    def clean_duration (x):
-        if pd.isnull(x):
-            x = dt.timedelta(seconds=0)
-        elif x.isdigit():
-            x = dt.timedelta(seconds=int(x))
-        return x
     raw_data['DURATION'] = raw_data['DURATION'].map(clean_duration)
 
     # Save to file
@@ -55,4 +48,20 @@ def clean_duration_data():
     outfile = 'cleaned_data_2.csv'
     raw_data.to_csv(outfile, index=False, sep='|')
 
-clean_duration_data()
+def convert_to_timestamp(infile, timeformat):
+    # Convert 'EVENT_DATE' column to Timestamp
+    dateparse = lambda x: pd.datetime.strptime(x, timeformat)
+    raw_data = pd.read_csv(infile, sep='|', parse_dates=['EVENT_DATE'], date_parser=dateparse)
+    print 'Done parsing data'
+    return raw_data
+
+def clean_duration (x):
+        if pd.isnull(x):
+            x = dt.timedelta(seconds=0)
+        elif x.isdigit():
+            x = dt.timedelta(seconds=int(x))
+        return x
+
+if __name__ == "__Main__":
+    # clean_header()
+    clean_duration_data()
