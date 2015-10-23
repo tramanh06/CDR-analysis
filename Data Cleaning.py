@@ -62,6 +62,6 @@ def clean_duration (x):
             x = dt.timedelta(seconds=int(x))
         return x
 
-if __name__ == "__Main__":
+if __name__ == "__main__":
     # clean_header()
     clean_duration_data()
