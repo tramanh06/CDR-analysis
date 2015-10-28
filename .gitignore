@@ -1,0 +1,8 @@
+# Data folders
+/AggregateData/
+/Data/
+
+# System files
+.DS_Store
+.idea/
+.ipynb_checkpoints/

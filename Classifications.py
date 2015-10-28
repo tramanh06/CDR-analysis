@@ -7,19 +7,30 @@ import matplotlib.pyplot as plt
 
 EVENT = {'INCOMING_CALL':0, 'OUTGOING_CALL':1, 'IDD_CALL':2, 'OUTGOING_SMS':4, 'INCOMING_SMS':5}
 
-def churn_boolean(x):
-    churn_timedelta = pd.to_timedelta(churn_duration_str)
-    end_date = pd.to_datetime(end_date_str)
-    if x['last activity'] < (end_date - churn_timedelta):
-        return 1
-    else:
-        return 0
+def process_agg_data(agg_data):
+    agg_data['avg duration/outcall'] = agg_data['out duration in sec']/agg_data['num outgoing calls']
+    agg_data['avg duration/incall'] = agg_data['in duration in sec']/agg_data['num incoming calls']
+    agg_data['record duration'] = (agg_data['last recds'] - agg_data['first recds']).dt.days
+    agg_data['avg outgoing calls/day'] = agg_data['num outgoing calls']/agg_data['record duration']
+    agg_data['avg incoming calls/day'] = agg_data['num incoming calls']/agg_data['record duration']
 
-def add_churner_column(agg_data):
+    # Remove timedelta columns
+    agg_data.drop('in duration', axis=1, inplace=True)
+    agg_data.drop('out duration', axis=1, inplace=True)
+
+    # Set Churner Column
+    churn_duration_str = '30 days'
+    churn_timedelta = pd.to_timedelta(churn_duration_str)
+    end_date = pd.to_datetime('2015-4-1')
+
+    def churn_boolean(x):
+        if x['last recds'] < (end_date - churn_timedelta):
+            return 1
+        else: return 0
+
     agg_data['churner'] = agg_data.apply(churn_boolean, axis=1)
 
 def plot_attribute_graph():
-    # fig = plt.figure()
     agg_data.hist(bins=50)
     plt.show()
 
@@ -27,24 +38,27 @@ def write_to_csv(outfile):
     agg_data.to_csv(outfile, index=False)
 
 if __name__ == "__main__":
+    '''
+    Declare parameters
+    '''
     infile = './AggregateData/agg_original.csv'
     outfile = './AggregateData/agg_original_wLabel.csv'
     churn_duration_str = '30 days'
     end_date_str = '2015-4-1'
-    remove_CC = True
-
+    remove_CC = False
     if remove_CC:
         infile = './AggregateData/agg_withoutCallCentre.csv'
         outfile = './AggregateData/agg_withoutCallCentre_label.csv'
 
+
     print 'Read in '+infile+' ...'
-    agg_data = pd.read_csv(infile, parse_dates=['first recds', 'last recds', 'last call',
-                                                'last sms', 'last idd', 'last activity'])
-    # Churners  NOTE: NOT NEEDED IF USE agg_data_avgCallDuration.csv
-    add_churner_column(agg_data)
+    dates_attr = ['first recds', 'last recds', 'last call', 'last sms', 'last idd', 'last activity']
+    agg_data = pd.read_csv(infile, parse_dates=dates_attr)
+
+    process_agg_data(agg_data)
 
     # Show distribution graph
-    plot_attribute_graph()
+    # plot_attribute_graph()
 
     # Write to csv
     write_to_csv(outfile)
