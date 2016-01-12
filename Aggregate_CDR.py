@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     infile = './Data/cleaned_data_2.csv'
     outfile = './AggregateData/agg_original.csv'
-    remove_CC = True
+    remove_CC = True    # Remove Call Centre records
 
     # read in csv. Convert 'EVENT_DATE' column to Timestamp
     print 'Reading in csv file...'

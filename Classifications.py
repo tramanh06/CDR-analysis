@@ -19,9 +19,8 @@ def process_agg_data(agg_data):
     agg_data.drop('out duration', axis=1, inplace=True)
 
     # Set Churner Column
-    churn_duration_str = '30 days'
     churn_timedelta = pd.to_timedelta(churn_duration_str)
-    end_date = pd.to_datetime('2015-4-1')
+    end_date = pd.to_datetime(end_date_str)
 
     def churn_boolean(x):
         if x['last recds'] < (end_date - churn_timedelta):
@@ -42,13 +41,13 @@ if __name__ == "__main__":
     Declare parameters
     '''
     infile = './AggregateData/agg_original.csv'
-    outfile = './AggregateData/agg_original_wLabel.csv'
-    churn_duration_str = '30 days'
+    outfile = './AggregateData/agg_original_wLabel_15days.csv'
+    churn_duration_str = '15 days'
     end_date_str = '2015-4-1'
-    remove_CC = False
+    remove_CC = True
     if remove_CC:
         infile = './AggregateData/agg_withoutCallCentre.csv'
-        outfile = './AggregateData/agg_withoutCallCentre_label.csv'
+        outfile = './AggregateData/agg_withoutCallCentre_label_15days.csv'
 
 
     print 'Read in '+infile+' ...'

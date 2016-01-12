@@ -56,6 +56,7 @@ def convert_to_timestamp(infile, timeformat):
     return raw_data
 
 def clean_duration (x):
+    # Convert duration to Timedelta
         if pd.isnull(x):
             x = dt.timedelta(seconds=0)
         elif x.isdigit():
