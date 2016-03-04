@@ -57,11 +57,11 @@ def convert_to_timestamp(infile, timeformat):
 
 def clean_duration (x):
     # Convert duration to Timedelta
-        if pd.isnull(x):
-            x = dt.timedelta(seconds=0)
-        elif x.isdigit():
-            x = dt.timedelta(seconds=int(x))
-        return x
+    if pd.isnull(x):
+        x = dt.timedelta(seconds=0)
+    elif x.isdigit():
+        x = dt.timedelta(seconds=int(x))
+    return x
 
 if __name__ == "__main__":
     # clean_header()
