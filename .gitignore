@@ -6,3 +6,8 @@
 .DS_Store
 .idea/
 .ipynb_checkpoints/
+
+# Data files
+*.csv
+*.arff
+*.txt
