@@ -1,10 +1,14 @@
 __author__ = 'TramAnh'
 
-outfile = "Data/rawdata_encoded.txt"
+import csv
+
+outfile = "Data/cleaned_data_encoded.csv"
+indexfile = "Data/index.txt"
+datafile = 'Data/cleaned_data_3.csv'
 
 print 'Prepare index to dict...'
 caller_dict = {}
-with open("Data/index.txt", "rb") as txtfile:
+with open(indexfile, "rb") as txtfile:
     for line in txtfile:
         if line.startswith("index"):
             continue
@@ -14,21 +18,22 @@ with open("Data/index.txt", "rb") as txtfile:
         caller_dict[caller]=i
 
 print 'Encode CDR with index...'
-with open('RawData/masked_data-20May2015.txt', 'rb') as rawfile:
-    writer = open(outfile, 'wb')
-    for line in rawfile:
-        if line.startswith("A_NUMBER"):
-            writer.write(line)
-            continue
-        tokens = line.split("|")
-        if tokens[0] and tokens[1]:
-            a, b, event, date, duration, cost = tokens[0], tokens[1], tokens[2], \
-                                                tokens[3], tokens[4], tokens[5]
-            a_encode = caller_dict[a]
-            b_encode = caller_dict[b]
-            writer.write("{0}|{1}|{2}|{3}|{4}|{5}".format(a_encode, b_encode,
-                                                          event, date, duration, cost))
+with open(datafile, 'rb') as csvfile:
+    csvreader = csv.reader(csvfile, delimiter="|")
+    with open(outfile, 'wb') as csvwrite:
+        writer = csv.writer(csvwrite, quoting=csv.QUOTE_NONE)
+        writer.writerow("A_NUMBER|B_NUMBER|EVENT_TYPE|EVENT_DATE|DURATION|EVENT_COST")
+        for line in csvreader:
+            if "A_NUMBER" in line:
+                # writer.write(line)
+                continue
+            if line[0] and line[1]:
+                a, b, event, date, duration, cost = line[0], line[1], line[2], \
+                                                    line[3], line[4], line[5]
+                a_encode = caller_dict[a]
+                b_encode = caller_dict[b]
+                writer.writerow("{0}|{1}|{2}|{3}|{4}|{5}".format(a_encode, b_encode,
+                                                              event, date, duration, cost))
 
-    writer.close()
-    
+
 
