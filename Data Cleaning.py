@@ -9,7 +9,7 @@ def clean_header():
     # remove all the header "A_NUMBER||'|'||...." that appears once in a while
     ###
 
-    input_file = '../../CDR Raw Data/masked_data-20May2015.txt'
+    input_file = 'RawData/masked_data-20May2015.txt'
 
     ### Clean repeated header
     output_file = 'cleaned_header.csv'
@@ -36,7 +36,7 @@ def clean_duration_data():
 
     # Convert 'EVENT_DATE' column to Timestamp
     timeformat = '%d-%b-%y %I.%M.%S.000000 %p'
-    infile = 'cleaned_header.csv'
+    infile = 'Data/cleaned_header.csv'
     raw_data = convert_to_timestamp(infile, timeformat)
 
     # Clean 'DURATION' to datetime format
@@ -45,13 +45,14 @@ def clean_duration_data():
 
     # Save to file
     print 'Saving to file'
-    outfile = 'cleaned_data_2.csv'
+    outfile = 'Data/cleaned_data_3.csv'
     raw_data.to_csv(outfile, index=False, sep='|')
 
 def convert_to_timestamp(infile, timeformat):
     # Convert 'EVENT_DATE' column to Timestamp
     dateparse = lambda x: pd.datetime.strptime(x, timeformat)
-    raw_data = pd.read_csv(infile, sep='|', parse_dates=['EVENT_DATE'], date_parser=dateparse)
+    raw_data = pd.read_csv(infile, sep='|', dtype={'A_NUMBER':object, 'B_NUMBER':object},
+                           parse_dates=['EVENT_DATE'], date_parser=dateparse)
     print 'Done parsing data'
     return raw_data
 
