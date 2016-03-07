@@ -122,7 +122,11 @@ def build_graph(data):
 def set_initial_churners(G, data0, data1):
     # Return list of churners
     a0 = G.nodes()
-    a1 = pd.unique(data1[data1['EVENT_DATE'].dt.day <16][['A_NUMBER', 'B_NUMBER']].ravel())
+    print 'In set_initial_churners: length a0= {0}'.format(len(a0))
+
+    # a1= nonchurner
+    a1 = pd.unique(data1[data1['EVENT_DATE'].dt.day <16][['A_NUMBER', 'B_NUMBER']].values.ravel())
+    print 'In set_initial_churners: length a1= {0}'.format(len(a1))
     churners = list(set(a0) - set(a1))
 
     return churners
