@@ -16,7 +16,7 @@ def prepare_data(input_file):
     # Convert 'EVENT_DATE' column to Timestamp
     # Convert 'DURATION' to timedelta
     print 'Read in csv file'
-    raw_data = pd.read_csv(infile, sep='|', parse_dates=['EVENT_DATE'])
+    raw_data = pd.read_csv(input_file, sep='|', parse_dates=['EVENT_DATE'])
     raw_data['DURATION'] = pd.to_timedelta(raw_data['DURATION'])
 
     # Split into months
