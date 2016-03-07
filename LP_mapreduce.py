@@ -54,4 +54,4 @@ def mapreduce():
     print results
 
 if __name__ == '__main__':
-    serialize_graph()
+    mapreduce()
