@@ -1,6 +1,6 @@
 __author__ = 'TramAnh'
 
-from LP_implement import prepare_data, build_graph, set_initial_churners, add_influence_label, label_propagate
+from LP_implement import prepare_data, set_graph_features
 
 import pandas as pd
 import numpy as np
@@ -12,36 +12,6 @@ from sklearn.preprocessing import normalize
 EVENT = {'INCOMING_CALL':0, 'OUTGOING_CALL':1, 'IDD_CALL':2, 'OUTGOING_SMS':4, 'INCOMING_SMS':5}
 
 infile = './Data/cleaned_data_encoded.csv'
-
-#### Main Function #####
-# param data is the monthly data
-def set_graph_features(data0, data1):
-    data = pd.concat([data0, data1])
-    # Aggregate call data
-    call_data = data[(data['EVENT_TYPE']==EVENT['OUTGOING_CALL']) | (data['EVENT_TYPE']==EVENT['INCOMING_CALL'])]
-
-    # Construct graph
-    G = build_graph(call_data)
-
-    # Add churner attribute to nodes
-    churners = set_initial_churners(data0, data1)
-    for n in G.nodes():
-        if n in churners:
-            G.add_node(n, churner=1)
-        else:
-            G.add_node(n, churner=0)
-
-    # Add influence attribute to nodes
-    add_influence_label(G)
-
-    # Label Propagation
-    Y = label_propagate(G)
-
-    # Combine Y with A_NUMBER -> return df
-    df = pd.DataFrame(Y, columns=['churn_prob', 'influence_prob'])
-    df['A_NUMBER'] = pd.Series(G.nodes())
-    df = df.set_index('A_NUMBER')
-    return df
 
 if __name__=='__main__':
     monthly_data = prepare_data(infile)
