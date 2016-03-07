@@ -119,17 +119,12 @@ def build_graph(data):
     G = nx.from_pandas_dataframe(df,'A_NUMBER', 'B_NUMBER', ['DURATION_SEC'])
     return G
 
-def set_initial_churners(G, data0, data1):
-    # Return list of churners
-    a0 = G.nodes()
-    print 'In set_initial_churners: length a0= {0}'.format(len(a0))
-
+def identify_nonchurners(G, data0, data1):
+    print 'Identify non churners...'
     # a1= nonchurner
     a1 = pd.unique(data1[data1['EVENT_DATE'].dt.day <16][['A_NUMBER', 'B_NUMBER']].values.ravel())
-    print 'In set_initial_churners: length a1= {0}'.format(len(a1))
-    churners = list(set(a0) - set(a1))
 
-    return churners
+    return a1
 
 # Remove lone nodes
 def remove_lone_nodes(G):
@@ -211,12 +206,10 @@ def label_propagate(G):
     return Y
 
 def add_churner_label(G, data0, data1):
-    churners = set_initial_churners(G, data0, data1)
-    for n in G.nodes():
-        if n in churners:
-            G.add_node(n, churner=1)
-        else:
-            G.add_node(n, churner=0)
+    nonchurners = identify_nonchurners(G, data0, data1)
+    nx.set_node_attributes(G, 'churner', 1)
+    for n in nonchurners:
+        G.add_node(n, churner=0)
 
 #### Main Function #####
 # param data is the monthly data
