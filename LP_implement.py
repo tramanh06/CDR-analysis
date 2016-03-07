@@ -119,10 +119,10 @@ def build_graph(data):
     G = nx.from_pandas_dataframe(df,'A_NUMBER', 'B_NUMBER', ['DURATION_SEC'])
     return G
 
-def set_initial_churners(data0, data1):
+def set_initial_churners(G, data0, data1):
     # Return list of churners
-    a0 = pd.unique(data0.A_NUMBER.ravel())
-    a1 = pd.unique(data1[data1['EVENT_DATE'].dt.day <16].A_NUMBER.ravel())
+    a0 = G.nodes()
+    a1 = pd.unique(data1[data1['EVENT_DATE'].dt.day <16][['A_NUMBER', 'B_NUMBER']].ravel())
     churners = list(set(a0) - set(a1))
 
     return churners
@@ -206,6 +206,13 @@ def label_propagate(G):
 
     return Y
 
+def add_churner_label(G, data0, data1):
+    churners = set_initial_churners(G, data0, data1)
+    for n in G.nodes():
+        if n in churners:
+            G.add_node(n, churner=1)
+        else:
+            G.add_node(n, churner=0)
 
 #### Main Function #####
 # param data is the monthly data
@@ -219,12 +226,7 @@ def set_graph_features(data0, data1):
     G = build_graph(call_data)
 
     print 'Add churner attribute to nodes...'
-    churners = set_initial_churners(data0, data1)
-    for n in G.nodes():
-        if n in churners:
-            G.add_node(n, churner=1)
-        else:
-            G.add_node(n, churner=0)
+    add_churner_label(G, data0, data1)
 
     print 'Add influence attribute to nodes...'
     add_influence_label(G)
