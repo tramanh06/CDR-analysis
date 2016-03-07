@@ -35,3 +35,5 @@ def serialize_graph():
     # Save serialized grapg
     pickle.dump(G, open(graph_file, 'wb' ))
 
+if __name__=='__main__':
+    serialize_graph()
