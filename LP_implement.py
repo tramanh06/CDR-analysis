@@ -15,10 +15,12 @@ def prepare_data(input_file):
     # read in csv
     # Convert 'EVENT_DATE' column to Timestamp
     # Convert 'DURATION' to timedelta
+    print 'Read in csv file'
     raw_data = pd.read_csv(infile, sep='|', parse_dates=['EVENT_DATE'])
     raw_data['DURATION'] = pd.to_timedelta(raw_data['DURATION'])
 
     # Split into months
+    print 'Split data into months'
     first_month = 10
     monthly_data = []
     for i in range(6):
@@ -209,18 +211,14 @@ def label_propagate(G):
 # param data is the monthly data
 def set_graph_features(data0, data1):
     data = pd.concat([data0, data1])
-    # Aggregate call data
+
+    print 'Aggregating call data...'
     call_data = data[(data['EVENT_TYPE']==EVENT['OUTGOING_CALL']) | (data['EVENT_TYPE']==EVENT['INCOMING_CALL'])]
 
-    # Construct graph
+    print 'Constructing graph...'
     G = build_graph(call_data)
 
-    # Preprocess
-    remove_lone_nodes(G)
-    connect_edges(G)
-    remove_BNUMBER_nodes(G)
-
-    # Add churner attribute to nodes
+    print 'Add churner attribute to nodes...'
     churners = set_initial_churners(data0, data1)
     for n in G.nodes():
         if n in churners:
@@ -228,13 +226,13 @@ def set_graph_features(data0, data1):
         else:
             G.add_node(n, churner=0)
 
-    # Add influence attribute to nodes
+    print 'Add influence attribute to nodes...'
     add_influence_label(G)
 
-    # Label Propagation
+    print 'Label Propagation...'
     Y = label_propagate(G)
 
-    # Combine Y with A_NUMBER -> return df
+    print 'Combine Y with A_NUMBER -> return df'
     df = pd.DataFrame(Y, columns=['churn_prob', 'influence_prob'])
     df['A_NUMBER'] = pd.Series(G.nodes())
     df = df.set_index('A_NUMBER')
