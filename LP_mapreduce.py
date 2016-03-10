@@ -8,7 +8,8 @@ from mrjob.protocol import JSONProtocol
 from mrjob.step import MRStep
 
 G = pickle.load( open( graph_file, 'rb' ))
-prob_distribution_dict = pickle.load( open( 'prob_distribution.pkl', 'rb'))
+churners_list = pickle.load( open( 'churners.pkl', 'rb'))
+influence_list = pickle.load( open( 'influence.pkl', 'rb'))
 
 class LabelProp(MRJob):
     """ A  map-reduce job that calculates the density """
@@ -18,7 +19,7 @@ class LabelProp(MRJob):
         super(LabelProp, self).configure_options()
 
         self.add_passthrough_option(
-            '--iterations', dest='iterations', default=10, type='int',
+            '--iterations', dest='iterations', default=3, type='int',
             help='number of iterations to run')
 
         # self.add_passthrough_option(
@@ -27,28 +28,39 @@ class LabelProp(MRJob):
         #     help='probability a web surfer will continue clicking on links')
 
 
-    def mapper(self, _, node):
-        d=np.array([0.0, 0.0])
+    def map_task(self, node, prob):
         node_int = int(node)
         neighbors =  G.neighbors(node_int)
+        p = np.array(prob)
 
         for neighbor in neighbors:
             w = G[node_int][neighbor]['DURATION_SEC']
-            d += float(w) * prob_distribution_dict[neighbor]
+            result = w*p
+            yield neighbor, result.tolist()
 
-        if sum(d):
-            norm = np.array([float(i)/sum(d) for i in d])
+    def reduce_task(self, key, val):
+        # Check if key is a churner or influence - Clamp the label
+        node_int = int(key)
+        if node_int in churners_list:
+            yield key, [1.0, 0.0]
+        elif node_int in influence_list:
+            yield key, [0.0, 1.0]
         else:
-            norm = np.zeros(2)
-        yield node_int, norm.tolist()
+            # Defensive style
+            total = np.zeros(2)
+            for each in val:
+                total += np.array(each)
 
+            if sum(total):      # To prevent divide by 0
+                norm = [float(i)/sum(total) for i in total]
+            else:
+                norm = np.zeros(2).tolist()
 
+            yield key, norm
 
-        # for neighbor in neighbors:
-        #     yield neighbor, 1
-    #
-    # def reducer(self, key, val):
-    #     yield (key, sum(val))
+    def steps(self):
+        return ([self.mr(mapper=self.map_task, reducer=self.reduce_task)] *
+                self.options.iterations)
 
 if __name__ == '__main__':
     LabelProp.run()
