@@ -1,33 +1,29 @@
-# /usr/bin/env python
+__author__ = 'TramAnh'
+
+#/usr/bin/env python
 
 from mrjob.job import MRJob
 import cPickle as pickle
-from LP_implement import g_train_file, churners_train_file, influence_train_file
+from LP_implement import g_test_file, churners_test_file, influence_test_file
 import numpy as np
 from mrjob.protocol import JSONProtocol
 from mrjob.step import MRStep
 
-G = pickle.load( open( g_train_file, 'rb' ))
-churners_list = pickle.load( open( churners_train_file, 'rb'))
-influence_list = pickle.load( open( influence_train_file, 'rb'))
+G = pickle.load( open( g_test_file, 'rb' ))
+churners_list = pickle.load( open( churners_test_file, 'rb'))
+influence_list = pickle.load( open( influence_test_file, 'rb'))
 
-ITERATION = 10
+ITERATION = 3
 
-class LabelProp(MRJob):
-    """ A  map-reduce job that calculates the density """
+class LabelPropTest(MRJob):
     INPUT_PROTOCOL = JSONProtocol  # read the same format we write
 
     def configure_options(self):
-        super(LabelProp, self).configure_options()
+        super(LabelPropTest, self).configure_options()
 
         self.add_passthrough_option(
             '--iterations', dest='iterations', default=ITERATION, type='int',
             help='number of iterations to run')
-
-        # self.add_passthrough_option(
-        #     '--damping-factor', dest='damping_factor', default=0.85,
-        #     type='float',
-        #     help='probability a web surfer will continue clicking on links')
 
 
     def map_task(self, node, prob):
@@ -65,4 +61,4 @@ class LabelProp(MRJob):
                 self.options.iterations)
 
 if __name__ == '__main__':
-    LabelProp.run()
+    LabelPropTest.run()

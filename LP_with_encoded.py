@@ -1,6 +1,6 @@
 __author__ = 'TramAnh'
 
-from LP_implement import prepare_data, set_graph_features
+from LP_implement import prepare_data, create_graph_features
 
 import pandas as pd
 import numpy as np
@@ -22,7 +22,7 @@ if __name__=='__main__':
     # feature_data = feature_engineer(monthly_data[1])
 
     print 'Add graph features. Build graph from CDR and add churner&influence label'
-    graph_data = set_graph_features(monthly_data[0], monthly_data[1])
+    graph_data = create_graph_features(monthly_data[0], monthly_data[1])
 
     # Create training set
     print 'Graph data:'

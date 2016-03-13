@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# /usr/bin/env python
 
 from LP_mapreduce import LabelProp
 import numpy as np
@@ -33,28 +33,23 @@ def create_ordered_dict(dict):
 
 writer = open('runner_output.txt', 'wb')
 
-count=0
 
-for i in range(2):
-# while True:
-    results = {}
-    mr_job = LabelProp(args=['nodes.txt'])
-    with mr_job.make_runner() as runner:
-        print 'Running iteration # %d'%(count)
-        runner.run()
-        for line in runner.stream_output():
-            key, value = mr_job.parse_output_line(line)
-            writer.write('{0}: {1}\n'.format(key, value))
-            results[key]= np.array(value)     # value is list of 2 numbers
-        print 'Ending stream output'
+results = {}
+mr_job = LabelProp(args=['result_json.txt'])
+with mr_job.make_runner() as runner:
+    runner.run()
+    for line in runner.stream_output():
+        key, value = mr_job.parse_output_line(line)
+        writer.write('{0}: {1}\n'.format(key, value))
+        results[key]= np.array(value)     # value is list of 2 numbers
+    print 'Ending stream output'
 
-    print 'Checking convergent'
-    # if is_convergent(results):
-    #     break
-    print 'Done checking convergent'
+print 'Checking convergent'
+# if is_convergent(results):
+#     break
+print 'Done checking convergent'
 
-    pickle.dump(results, open('prob_file_{0}.pkl'.format(count), 'wb'))
-    count += 1
+pickle.dump(results, open('prob_file_{0}.pkl'.format(count), 'wb'))
 
 
 # print results

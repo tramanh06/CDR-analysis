@@ -9,15 +9,22 @@ from sklearn.preprocessing import normalize
 import cPickle as pickle
 
 EVENT = {'INCOMING_CALL':0, 'OUTGOING_CALL':1, 'IDD_CALL':2, 'OUTGOING_SMS':4, 'INCOMING_SMS':5}
+MAXDAY = 31
 
-infile = './Data/cleaned_data_encoded.csv'
+# infile = './Data/cleaned_data_encoded.csv'
+g_train_file = 'G_model.pkl'
+g_test_file = 'G_model_test.pkl'
+churners_train_file = 'churners_train.pkl'
+churners_test_file = 'churners_test.pkl'
+influence_train_file = 'influence_train.pkl'
+influence_test_file = 'influence_test.pkl'
 
 def prepare_data(input_file):
     # read in csv
     # Convert 'EVENT_DATE' column to Timestamp
     # Convert 'DURATION' to timedelta
     print 'Read in csv file'
-    raw_data = pd.read_csv(infile, sep='|', parse_dates=['EVENT_DATE'])
+    raw_data = pd.read_csv(input_file, sep='|', parse_dates=['EVENT_DATE'])
     raw_data['DURATION'] = pd.to_timedelta(raw_data['DURATION'])
 
     # Split into months
@@ -109,7 +116,7 @@ def nonchurns(x):
 def polish_data(data):
     for column in data:
         if data[column].dtypes == '<M8[ns]':    # '<M8[ns]' is datetime
-            data[column] = data[column].dt.day
+            data[column] = data[column].dt.day  # TODO: scale when training data is more than a month
             data[column] = data[column].fillna(0)
 
 def build_graph(data):
@@ -165,6 +172,7 @@ def add_influence_label(G):
     degree_list = G.degree().values()
     sorted_degree = sorted(degree_list, reverse=True)[:50]
     threshold = sorted_degree[-1]
+    influence = []
 
     # Add label
     for n in G.nodes():
@@ -172,6 +180,9 @@ def add_influence_label(G):
             G.add_node(n, influence=0)
         else:
             G.add_node(n, influence=1)
+            influence.append(n)
+
+    return influence
 
 # Graph functions
 def build_Y(G):
@@ -214,9 +225,11 @@ def add_churner_label(G, data0, data1):
     for n in churners:
         G.add_node(n, churner=1)
 
+    return churners
+
 #### Main Function #####
 # param data is the monthly data
-def set_graph_features(data0, data1):
+def create_graph_features(data0, data1):
     data = pd.concat([data0, data1])
 
     print 'Aggregating call data...'
@@ -226,12 +239,12 @@ def set_graph_features(data0, data1):
     G = build_graph(call_data)
 
     print 'Add churner attribute to nodes...'
-    add_churner_label(G, data0, data1)
+    churners = add_churner_label(G, data0, data1)
 
     print 'Add influence attribute to nodes...'
-    add_influence_label(G)
+    influence = add_influence_label(G)
 
-    serialize_G(G)
+    return G, churners, influence
 
     # print 'Label Propagation...'
     # Y = label_propagate(G)
@@ -242,20 +255,40 @@ def set_graph_features(data0, data1):
     # df = df.set_index('A_NUMBER')
     # return df
 
-def serialize_G(G):
-    pickle.dump(G, open( 'G_model.pkl', 'wb'))
+def serialize(obj, filename):
+    pickle.dump(obj, open( filename, 'wb'))
 
 # Main program
-if __name__=='__main__':
+def feature_graph_engineer(infile):
     monthly_data = prepare_data(infile)
 
-    churn_period = monthly_data[2][monthly_data[2]['EVENT_DATE'].dt.day <16]
 
     print 'Creating features for training'
-    feature_data = feature_engineer(monthly_data[1])
+    feature_data_train = feature_engineer(monthly_data[1])
+    feature_data_test = feature_engineer(monthly_data[2])
 
-    print 'Add graph features. Build graph from CDR and add churner&influence label'
-    set_graph_features(monthly_data[0], monthly_data[1])
+    print 'Create graph features. Build graph from CDR and add churner&influence label'
+    print 'Serialize graph'
+    G_train, churners_train_lst, influence_train_lst = create_graph_features(monthly_data[0], monthly_data[1])
+    G_test, churners_test_lst, influence_test_lst = create_graph_features(monthly_data[1], monthly_data[2])
+
+    print 'Serialize G...'
+    serialize(G_train, g_train_file)
+    serialize(G_test, g_test_file)
+
+    print 'Serialize churners list..'
+    serialize(churners_train_lst, churners_train_file)
+    serialize(influence_train_lst, influence_train_file)
+    serialize(churners_test_lst, churners_test_file)
+    serialize(influence_test_lst, influence_test_file)
+
+    print 'Determine churner label'
+    churn_period_train = monthly_data[2][monthly_data[2]['EVENT_DATE'].dt.day <16]
+    churn_period_test = monthly_data[3][monthly_data[3]['EVENT_DATE'].dt.day <16]
+    train_data = set_label(feature_data_train, churn_period_train)
+    test_data = set_label(feature_data_test, churn_period_test)
+
+    return train_data, test_data     # train_data is DataFrame
 
     # run serialize_classDist.py
 
