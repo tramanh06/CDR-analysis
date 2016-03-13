@@ -11,3 +11,6 @@
 *.csv
 *.arff
 *.txt
+*.pkl
+
+*.pyc
