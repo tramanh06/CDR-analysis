@@ -6,10 +6,11 @@ import datetime as dt
 import matplotlib.pyplot as plt
 import networkx as nx
 from sklearn.preprocessing import normalize
+import cPickle as pickle
 
 EVENT = {'INCOMING_CALL':0, 'OUTGOING_CALL':1, 'IDD_CALL':2, 'OUTGOING_SMS':4, 'INCOMING_SMS':5}
 
-infile = './Data/cleaned_data_2.csv'
+infile = './Data/cleaned_data_encoded.csv'
 
 def prepare_data(input_file):
     # read in csv
@@ -119,12 +120,14 @@ def build_graph(data):
     G = nx.from_pandas_dataframe(df,'A_NUMBER', 'B_NUMBER', ['DURATION_SEC'])
     return G
 
-def identify_nonchurners(G, data0, data1):
+def identify_churners(G, data0, data1):
     print 'Identify non churners...'
     # a1= nonchurner
-    a1 = pd.unique(data1[data1['EVENT_DATE'].dt.day <16][['A_NUMBER', 'B_NUMBER']].values.ravel())
+    a0 = pd.unique(data0.A_NUMBER.ravel())
+    a1 = pd.unique(data1[data1['EVENT_DATE'].dt.day <16].A_NUMBER.ravel())
+    churners = list(set(a0) - set(a1))
 
-    return a1
+    return churners
 
 # Remove lone nodes
 def remove_lone_nodes(G):
@@ -206,10 +209,10 @@ def label_propagate(G):
     return Y
 
 def add_churner_label(G, data0, data1):
-    nonchurners = identify_nonchurners(G, data0, data1)
-    nx.set_node_attributes(G, 'churner', 1)
-    for n in nonchurners:
-        G.add_node(n, churner=0)
+    churners = identify_churners(G, data0, data1)
+    nx.set_node_attributes(G, 'churner', 0)
+    for n in churners:
+        G.add_node(n, churner=1)
 
 #### Main Function #####
 # param data is the monthly data
@@ -228,17 +231,21 @@ def set_graph_features(data0, data1):
     print 'Add influence attribute to nodes...'
     add_influence_label(G)
 
-    print 'Label Propagation...'
-    Y = label_propagate(G)
+    serialize_G(G)
 
-    print 'Combine Y with A_NUMBER -> return df'
-    df = pd.DataFrame(Y, columns=['churn_prob', 'influence_prob'])
-    df['A_NUMBER'] = pd.Series(G.nodes())
-    df = df.set_index('A_NUMBER')
-    return df
+    # print 'Label Propagation...'
+    # Y = label_propagate(G)
+    #
+    # print 'Combine Y with A_NUMBER -> return df'
+    # df = pd.DataFrame(Y, columns=['churn_prob', 'influence_prob'])
+    # df['A_NUMBER'] = pd.Series(G.nodes())
+    # df = df.set_index('A_NUMBER')
+    # return df
+
+def serialize_G(G):
+    pickle.dump(G, open( 'G_model.pkl', 'wb'))
 
 # Main program
-
 if __name__=='__main__':
     monthly_data = prepare_data(infile)
 
@@ -248,19 +255,27 @@ if __name__=='__main__':
     feature_data = feature_engineer(monthly_data[1])
 
     print 'Add graph features. Build graph from CDR and add churner&influence label'
-    graph_data = set_graph_features(monthly_data[0], monthly_data[1])
+    set_graph_features(monthly_data[0], monthly_data[1])
 
-    # Create training set
-    print 'Graph data:'
-    print graph_data
+    # run serialize_classDist.py
 
-    print 'Feature data:'
-    print feature_data
+    # run write_churners_list.py
 
-    feature_data = feature_data.join(graph_data)
+    # run LP MapReduce
 
-    print 'Determine churner label'
-    train_data = set_label(feature_data, churn_period)
+    # post-process
 
-    print 'Write to csv'
-    train_data.to_csv('Month2_LP.csv', index=False)
+    # # Create training set
+    # print 'Graph data:'
+    # print graph_data
+
+    # print 'Feature data:'
+    # print feature_data
+
+    # feature_data = feature_data.join(graph_data)
+    #
+    # print 'Determine churner label'
+    # train_data = set_label(feature_data, churn_period)
+    #
+    # print 'Write to csv'
+    # train_data.to_csv('Month2_LP.csv', index=False)

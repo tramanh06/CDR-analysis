@@ -19,7 +19,7 @@ class LabelProp(MRJob):
         super(LabelProp, self).configure_options()
 
         self.add_passthrough_option(
-            '--iterations', dest='iterations', default=3, type='int',
+            '--iterations', dest='iterations', default=10, type='int',
             help='number of iterations to run')
 
         # self.add_passthrough_option(
@@ -41,7 +41,7 @@ class LabelProp(MRJob):
     def reduce_task(self, key, val):
         # Check if key is a churner or influence - Clamp the label
         node_int = int(key)
-        if node_int in churners_list:
+        if node_int in churners_list:       # Clamp label
             yield key, [1.0, 0.0]
         elif node_int in influence_list:
             yield key, [0.0, 1.0]
