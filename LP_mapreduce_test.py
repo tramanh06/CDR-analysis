@@ -13,7 +13,7 @@ G = pickle.load( open( g_test_file, 'rb' ))
 churners_list = pickle.load( open( churners_test_file, 'rb'))
 influence_list = pickle.load( open( influence_test_file, 'rb'))
 
-ITERATION = 3
+ITERATION = 50
 
 class LabelPropTest(MRJob):
     INPUT_PROTOCOL = JSONProtocol  # read the same format we write

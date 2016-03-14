@@ -115,7 +115,7 @@ def nonchurns(x):
 # Convert datetime to integer + fill in missing data
 def polish_data(data):
     for column in data:
-        if data[column].dtypes == '<M8[ns]':    # '<M8[ns]' is datetime
+        if data[column].dtypes == 'O':    # Letter O. Not 0! Don't know what's this!
             data[column] = data[column].dt.day  # TODO: scale when training data is more than a month
             data[column] = data[column].fillna(0)
 
@@ -285,8 +285,12 @@ def feature_graph_engineer(infile):
     print 'Determine churner label'
     churn_period_train = monthly_data[2][monthly_data[2]['EVENT_DATE'].dt.day <16]
     churn_period_test = monthly_data[3][monthly_data[3]['EVENT_DATE'].dt.day <16]
+
     train_data = set_label(feature_data_train, churn_period_train)
     test_data = set_label(feature_data_test, churn_period_test)
+
+    print train_data.head()
+    print test_data.head()
 
     return train_data, test_data     # train_data is DataFrame
 

@@ -11,7 +11,7 @@ G = pickle.load( open( g_train_file, 'rb' ))
 churners_list = pickle.load( open( churners_train_file, 'rb'))
 influence_list = pickle.load( open( influence_train_file, 'rb'))
 
-ITERATION = 10
+ITERATION = 50
 
 class LabelProp(MRJob):
     """ A  map-reduce job that calculates the density """
